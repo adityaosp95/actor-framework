@@ -35,6 +35,7 @@ namespace io {
 
 uint16_t publish_impl(abstract_actor_ptr whom, uint16_t port,
                       const char* in, bool reuse_addr) {
+  CAF_REQUIRE(whom != nullptr);
   std::string str;
   if (in != nullptr) {
     str = in;
@@ -42,7 +43,8 @@ uint16_t publish_impl(abstract_actor_ptr whom, uint16_t port,
   auto mm = get_middleman_actor();
   scoped_actor self;
   uint16_t result;
-  self->sync_send(mm, put_atom{}, whom->address(), port, str, reuse_addr).await(
+  self->sync_send(mm, put_atom::value, whom->address(), port, str,
+                  reuse_addr).await(
     [&](ok_atom, uint16_t res) {
       result = res;
     },

@@ -36,7 +36,7 @@ namespace caf {
 namespace io {
 
 broker::servant::~servant() {
-  // nop
+  CAF_LOG_TRACE("");
 }
 
 broker::servant::servant(broker* ptr) : m_disconnected(false), m_broker(ptr) {
@@ -268,6 +268,8 @@ void broker::cleanup(uint32_t reason) {
   m_cache.clear();
   super::cleanup(reason);
   deref(); // release implicit reference count from middleman
+  CAF_LOG_INFO("refcount after deref() in broker::cleanup(): "
+               << get_reference_count());
 }
 
 void broker::on_exit() {

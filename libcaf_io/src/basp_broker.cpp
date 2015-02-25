@@ -75,7 +75,7 @@ basp_broker::basp_broker(middleman& pref) : broker(pref), m_namespace(*this) {
 }
 
 basp_broker::~basp_broker() {
-  // nop
+  CAF_LOG_TRACE("");
 }
 
 behavior basp_broker::make_behavior() {
@@ -170,6 +170,10 @@ behavior basp_broker::make_behavior() {
     // received from middleman actor
     [=](put_atom, accept_handle hdl,
         const actor_addr& whom, uint16_t port) {
+      CAF_LOGM_TRACE("make_behavior$_put_atom",
+                     CAF_ARG(hdl.id()) << ", "<< CAF_TSARG(whom) << ", " <<
+                     CAF_ARG(port));
+      CAF_REQUIRE(!hdl.invalid() && whom != invalid_actor_addr);
       assign_tcp_doorman(hdl);
       add_published_actor(hdl, actor_cast<abstract_actor_ptr>(whom), port);
       parent().notify<hook::actor_published>(whom, port);
@@ -686,6 +690,7 @@ actor_proxy_ptr basp_broker::make_proxy(const node_id& nid, actor_id aid) {
 }
 
 void basp_broker::on_exit() {
+  CAF_LOG_TRACE("");
   m_ctx.clear();
   m_acceptors.clear();
   m_open_ports.clear();

@@ -361,9 +361,13 @@ namespace network {
           CAF_CRITICAL("epoll_ctl() failed");
       }
     }
+    else {
+      CAF_LOG_DEBUG("epoll_ctl succeeded");
+    }
     if (e.ptr) {
       auto remove_from_loop_if_needed = [&](int flag, operation flag_op) {
         if ((old & flag) && !(e.mask & flag)) {
+          CAF_LOG_DEBUG("removed socket " << e.fd << " from loop, flag: " << static_cast<int>(flag_op));
           e.ptr->removed_from_loop(flag_op);
         }
       };
@@ -594,12 +598,14 @@ default_multiplexer::runnable* default_multiplexer::rd_dispatch_request() {
   intptr_t ptrval;
   // on windows, we actually have sockets, otherwise we have file handles
 # ifdef CAF_WINDOWS
-    ::recv(m_pipe.first, reinterpret_cast<socket_recv_ptr>(&ptrval),
-           sizeof(ptrval), 0);
+    auto res = recv(m_pipe.first, reinterpret_cast<socket_recv_ptr>(&ptrval),
+                    sizeof(ptrval), 0);
 # else
-    auto unused = ::read(m_pipe.first, &ptrval, sizeof(ptrval));
-    static_cast<void>(unused);
+    auto res = read(m_pipe.first, &ptrval, sizeof(ptrval));
 # endif
+  if (res != sizeof(ptrval)) {
+    return nullptr;
+  }
   return reinterpret_cast<runnable*>(ptrval);;
 }
 
@@ -698,6 +704,13 @@ void default_multiplexer::init() {
 default_multiplexer::~default_multiplexer() {
   if (m_epollfd != invalid_native_socket) {
     closesocket(m_epollfd);
+  }
+  // flush pipe before closing it
+  nonblocking(m_pipe.first, true);
+  auto ptr = rd_dispatch_request();
+  while (ptr) {
+    ptr->request_deletion();
+    ptr = rd_dispatch_request();
   }
   closesocket(m_pipe.first);
   closesocket(m_pipe.second);

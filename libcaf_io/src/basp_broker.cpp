@@ -201,6 +201,8 @@ behavior basp_broker::make_behavior() {
     },
     [=](delete_atom, int64_t request_id, const actor_addr& whom, uint16_t port)
     -> message {
+      CAF_LOG_TRACE(CAF_ARG(request_id) << ", " << CAF_TSARG(whom)
+                    << ", " << CAF_ARG(port));
       if (whom == invalid_actor_addr) {
         return make_message(error_atom::value, request_id,
                             "whom == invalid_actor_addr");

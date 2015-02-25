@@ -161,9 +161,12 @@ class middleman_actor_impl : public middleman_actor_base::base {
 
   void on_exit() {
     CAF_LOG_TRACE("");
+    CAF_LOG_DEBUG("m_pending_gets.size = " << m_pending_gets.size());
     m_pending_gets.clear();
+    CAF_LOG_DEBUG("m_pending_deletes.size = " << m_pending_deletes.size());
     m_pending_deletes.clear();
     m_broker = invalid_actor;
+    CAF_LOG_DEBUG("refcount: " << get_reference_count());
   }
 
   using get_op_result = either<ok_atom, actor_addr>
@@ -317,10 +320,11 @@ class middleman_actor_impl : public middleman_actor_base::base {
 };
 
 middleman_actor_impl::~middleman_actor_impl() {
-  // nop
+  CAF_LOG_TRACE("");
 }
 
 middleman* middleman::instance() {
+  CAF_LOGF_TRACE("");
   auto sid = detail::singletons::middleman_plugin_id;
   auto fac = [] { return new middleman; };
   auto res = detail::singletons::get_plugin_singleton(sid, fac);
@@ -338,7 +342,12 @@ void middleman::initialize() {
   m_backend_supervisor = m_backend->make_supervisor();
   m_thread = std::thread([this] {
     CAF_LOGC_TRACE("caf::io::middleman", "initialize$run", "");
-    m_backend->run();
+    try {
+      m_backend->run();
+    }
+    catch (std::exception& e) {
+      CAF_LOG_ERROR("m_backed died with exception: " << e.what());
+    }
   });
   m_backend->thread_id(m_thread.get_id());
   // announce io-related types

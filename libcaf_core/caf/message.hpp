@@ -38,7 +38,9 @@
 #include "caf/detail/implicit_conversions.hpp"
 
 namespace caf {
-
+namespace detail {
+class concatenated_tuple;
+} // namespace detail
 class message_handler;
 
 /**
@@ -46,6 +48,7 @@ class message_handler;
  * tuple with elements of any type.
  */
 class message {
+  friend class detail::concatenated_tuple;
  public:
   /**
    * Creates an empty message.
@@ -107,6 +110,11 @@ class message {
    * Creates a new message of size `n` starting at the element at position `p`.
    */
   message slice(size_t p, size_t n) const;
+
+  /**
+   * Concatinate messages
+   */
+  message concat(std::initializer_list<message*> msgs);
 
   /**
    * Returns a mutable pointer to the element at position `p`.

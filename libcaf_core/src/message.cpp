@@ -26,6 +26,7 @@
 
 #include "caf/detail/singletons.hpp"
 #include "caf/detail/decorated_tuple.hpp"
+#include "caf/detail/concatenated_tuple.hpp"
 
 namespace caf {
 
@@ -113,6 +114,10 @@ message message::slice(size_t pos, size_t n) const {
   std::vector<size_t> mapping(std::min(s - pos, n));
   std::iota(mapping.begin(), mapping.end(), pos);
   return message{detail::decorated_tuple::make(m_vals, std::move(mapping))};
+}
+
+message message::concat(std::initializer_list<message*> msgs) {
+  return message{detail::concatenated_tuple::make(msgs)};
 }
 
 optional<message> message::apply(message_handler handler) {
